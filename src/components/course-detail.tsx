@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ApplySheet } from "@/components/apply-sheet";
-import { AdminBar, BottomBar, PreviewBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, BottomBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
 import { canApply, courseGroup, getCourse, openCohorts, recordView } from "@/lib/api";
 import { COMMON_FAQ } from "@/lib/faq";
 import { cohortStatus, cohortStatusLabel, deadlineLabel, formatDate, formatDot, formatPrice, formatRange, todayString, weeksLabel } from "@/lib/format";
@@ -48,7 +48,7 @@ export function CourseDetailPage({ mode }: { mode: Mode }) {
   if (state.status === "missing")
     return (
       <main>
-        {mode === "admin" ? <AdminBar userHref="/" backHref="/admin" /> : <TopBar />}
+        {mode === "admin" ? <AdminBar backHref="/admin" /> : <TopBar />}
         <StatusScreen emoji="🔍" title="찾는 과정이 없어요" body={"주소가 잘못되었거나 모집이 끝난 과정이에요.\n목록에서 다시 골라 주세요."} action={<HomeLink />} />
       </main>
     );
@@ -109,12 +109,11 @@ function CourseDetail({ c, mode, onChanged }: { c: CourseWithCohorts; mode: Mode
       <FlashToast />
       {admin ? (
         <>
-          <AdminBar userHref={`/courses/${c.id}`} backHref="/admin" />
+          <AdminBar backHref="/admin" />
           <p className="bg-ink/5 px-5 py-2.5 text-[13px] text-ink-soft">수강 희망자에게는 기수 추가 버튼을 뺀 이 화면이 그대로 보여요.</p>
         </>
       ) : (
         <>
-        <PreviewBar adminHref={`/admin/courses/${c.id}`} />
         <TopBar
         title={c.title}
         right={

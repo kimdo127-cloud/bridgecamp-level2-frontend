@@ -28,7 +28,7 @@ export default function InquiriesPage() {
 
   return (
     <main className="pb-12">
-      <AdminBar userHref="/" nav="/admin/inquiries" />
+      <AdminBar nav="/admin/inquiries" />
       <section className="px-5 pt-5">
         <h1 className="text-[22px] font-bold">문의·챗봇 기록</h1>
         <p className="mt-1 text-sm text-ink-soft">

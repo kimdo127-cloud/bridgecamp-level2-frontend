@@ -25,7 +25,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     return (
       <main>
         <div className="flex h-14 items-center bg-ink px-5 text-white">
-          <p className="font-bold">브릿지캠프</p>
+          <Link href="/" className="font-bold active:opacity-70">
+            브릿지캠프
+          </Link>
           <span className="ml-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[12px] font-semibold">운영 모드</span>
         </div>
         <StatusScreen

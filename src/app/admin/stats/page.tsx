@@ -40,7 +40,7 @@ export default function StatsPage() {
 
   return (
     <main className="pb-12">
-      <AdminBar userHref="/" nav="/admin/stats" />
+      <AdminBar nav="/admin/stats" />
       <section className="px-5 pt-5">
         <h1 className="text-[22px] font-bold">운영 현황</h1>
         <p className="mt-1 text-sm text-ink-soft">{state.status === "ready" ? `${formatDot(state.stats.today)} 기준` : "오늘 기준"} · 신청·취소가 바로 반영돼요</p>

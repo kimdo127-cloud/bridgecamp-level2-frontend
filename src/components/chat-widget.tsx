@@ -33,10 +33,8 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // 운영 화면과 로그인 화면에는 챗봇을 띄우지 않는다
-  if (pathname.startsWith("/admin") || pathname.startsWith("/login")) return null;
-  // 상세 화면은 하단 신청 바가 있어서 버튼을 그 위로 올린다
-  const lifted = pathname.startsWith("/courses/");
+  // 운영 화면, 로그인 화면, 과정 상세(하단 신청 바에 집중)에는 챗봇을 띄우지 않는다
+  if (pathname.startsWith("/admin") || pathname.startsWith("/login") || pathname.startsWith("/courses/")) return null;
 
   const ask = async (text: string) => {
     const question = text.trim();
@@ -64,7 +62,7 @@ export function ChatWidget() {
   return (
     <>
       {!open && (
-        <div className={`pointer-events-none fixed inset-x-0 z-40 mx-auto flex max-w-md justify-end px-4 ${lifted ? "bottom-[calc(env(safe-area-inset-bottom)+96px)]" : "bottom-[calc(env(safe-area-inset-bottom)+20px)]"}`}>
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+20px)] z-40 mx-auto flex max-w-md justify-end px-4">
           <button
             type="button"
             onClick={() => setOpen(true)}

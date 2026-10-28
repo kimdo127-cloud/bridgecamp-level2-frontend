@@ -63,8 +63,9 @@ export function TopBar({ title, backHref, right }: { title?: string; backHref?: 
 
 export type Mode = "user" | "admin";
 
-// 운영 모드 상단 바: 사용자 화면과 구분되도록 어두운 색으로 표시한다. 첫 화면들(과정·현황·문의)에는 메뉴가 붙는다
-export function AdminBar({ userHref, backHref, nav }: { userHref: string; backHref?: string; nav?: AdminMenuHref }) {
+// 운영 모드 상단 바: 사용자 화면과 구분되도록 어두운 색으로 표시한다. 첫 화면들(과정·현황·문의)에는 메뉴가 붙는다.
+// 로그인으로 역할이 나뉘므로 사용자 화면 미리보기는 두지 않는다. 로고를 누르면 운영 첫 화면(/admin)으로 간다
+export function AdminBar({ backHref, nav }: { backHref?: string; nav?: AdminMenuHref }) {
   const router = useRouter();
   return (
     <div className="sticky top-0 z-20 bg-ink text-white">
@@ -83,11 +84,10 @@ export function AdminBar({ userHref, backHref, nav }: { userHref: string; backHr
         ) : (
           <span className="w-3" />
         )}
-        <p className="text-[16px] font-bold">브릿지캠프</p>
-        <span className="ml-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[12px] font-semibold">운영 모드</span>
-        <Link href={userHref} onClick={startPreview} className="ml-auto px-3 py-2 text-[13px] font-medium text-white/80 active:text-white">
-          사용자 화면 미리보기
+        <Link href="/admin" className="rounded-lg px-1 text-[16px] font-bold active:opacity-70" aria-label="운영 첫 화면으로">
+          브릿지캠프
         </Link>
+        <span className="ml-1.5 rounded-md bg-white/15 px-2 py-0.5 text-[12px] font-semibold">운영 모드</span>
       </header>
       {nav && (
         <nav className="flex items-center gap-1 px-3 pb-2" aria-label="운영 메뉴">
@@ -159,48 +159,6 @@ export function UserMenu() {
       </span>
       {user.role === "admin" ? "운영 모드" : "내 신청"}
     </Link>
-  );
-}
-
-// 운영 모드에서 사용자 화면으로 넘어간 동안만 상단에 미리보기 바를 띄운다 (Shopify preview bar, Blackboard Student Preview).
-// 탭 단위 저장소(sessionStorage)를 써서 일반 사용자나 공유된 링크에는 바가 보이지 않는다.
-const PREVIEW_KEY = "bridgecamp:preview";
-
-function startPreview() {
-  try {
-    sessionStorage.setItem(PREVIEW_KEY, "1");
-  } catch {}
-}
-
-export function PreviewBar({ adminHref }: { adminHref: string }) {
-  const router = useRouter();
-  const [on, setOn] = useState(false);
-
-  useEffect(() => {
-    let active = false;
-    try {
-      active = sessionStorage.getItem(PREVIEW_KEY) === "1";
-    } catch {}
-    const t = setTimeout(() => setOn(active), 0);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (!on) return null;
-  const close = () => {
-    try {
-      sessionStorage.removeItem(PREVIEW_KEY);
-    } catch {}
-    router.push(adminHref);
-  };
-  return (
-    <div className="relative flex items-center justify-between gap-2 bg-ink px-4 py-2.5 text-[13px] text-white">
-      <p>
-        <b>운영자 미리보기</b> <span className="text-white/70">· 수강 희망자에게 보이는 화면</span>
-      </p>
-      <button type="button" onClick={close} className="shrink-0 rounded-lg bg-white/15 px-3 py-1.5 font-semibold active:bg-white/25">
-        미리보기 닫기
-      </button>
-    </div>
   );
 }
 

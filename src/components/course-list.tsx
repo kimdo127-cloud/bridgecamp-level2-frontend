@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AdminBar, CategoryThumb, PreviewBar, FlashToast, Skeleton, SlowServerHint, StatusScreen, UserMenu, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, CategoryThumb, FlashToast, Skeleton, SlowServerHint, StatusScreen, UserMenu, primaryButton, type Mode } from "@/components/ui";
 import { courseGroup, listCourses, openCohorts, type CourseGroup } from "@/lib/api";
 import { cohortStatusLabel, deadlineLabel, formatDot, formatPrice, weeksLabel } from "@/lib/format";
 import { CATEGORIES, FORMATS, type CourseFilter, type CourseWithCohorts } from "@/lib/types";
@@ -51,17 +51,25 @@ export function CourseList({ mode }: { mode: Mode }) {
   return (
     <main className={admin ? "pb-32" : "pb-10"}>
       <FlashToast />
-      {!admin && <PreviewBar adminHref="/admin" />}
       {admin ? (
-        <AdminBar userHref="/" nav="/admin" />
+        <AdminBar nav="/admin" />
       ) : (
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-line/70 bg-surface/90 px-5 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <div className="flex items-center gap-2">
+        {/* 로고를 누르면 메인 홈 첫 상태로: 검색·필터를 비우고 맨 위로 */}
+        <Link
+          href="/"
+          onClick={() => {
+            clearFilter();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="flex items-center gap-2 rounded-lg active:opacity-70"
+          aria-label="브릿지캠프 홈"
+        >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-sm font-black text-white" aria-hidden>
             B
           </span>
-          <p className="text-[17px] font-extrabold tracking-tight">브릿지캠프</p>
-        </div>
+          <span className="text-[17px] font-extrabold tracking-tight">브릿지캠프</span>
+        </Link>
         <UserMenu />
       </header>
       )}
