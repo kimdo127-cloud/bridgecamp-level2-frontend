@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #f5f6fa;
+  --color-ink: #181b2b;
+  --color-ink-soft: #6a6f85;
+  --color-line: #e5e7ef;
+  --color-brand-50: #f2f4ff;
+  --color-brand-100: #e4e8ff;
+  --color-brand-200: #c9d0fe;
+  --color-brand-300: #a3aefc;
+  --color-brand-400: #7b86f7;
+  --color-brand-500: #5b62ef;
+  --color-brand-600: #4a4ae0;
+  --color-brand-700: #3c3bbf;
+  --color-moss-100: #e3f4ea;
+  --color-moss-600: #1f7a4a;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
+html {
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #e8eaf2;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  word-break: keep-all;
+}
+
+@keyframes toast {
+  0% { opacity: 0; transform: translateY(-8px); }
+  10%, 85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+input[type="date"] {
+  min-height: 3rem;
+  -webkit-appearance: none;
+  appearance: none;
+}
