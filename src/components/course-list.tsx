@@ -118,14 +118,9 @@ export function CourseList({ mode }: { mode: Mode }) {
       )}
 
       {state.status === "ready" && filtering && state.courses.length > 0 && (
-        <div className="mt-4 flex items-center justify-between px-5 text-[13px]">
-          <p className="text-ink-soft">
-            검색 결과 <b className="text-ink">{state.courses.length}개</b>
-          </p>
-          <button type="button" onClick={clearFilter} className="font-semibold text-brand-600 active:opacity-60">
-            조건 지우기
-          </button>
-        </div>
+        <p className="mt-4 px-5 text-[13px] text-ink-soft">
+          검색 결과 <b className="text-ink">{state.courses.length}개</b>
+        </p>
       )}
 
       {state.status === "ready" && state.courses.length === 0 && !filtering && (
