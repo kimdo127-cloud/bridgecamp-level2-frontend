@@ -58,6 +58,23 @@ export function useAuth() {
   return state;
 }
 
+// 챗봇 방문자 ID: 브라우저 저장소(로컬 스토리지)에 무작위 UUID를 한 번 만들어 두고 계속 쓴다.
+// IP 같은 신원 정보는 쓰지 않고, 같은 브라우저인지만 구분한다. 브라우저 데이터를 지우면 새 방문자가 된다
+const VISITOR_KEY = "bridgecamp:visitor";
+
+export function getVisitorId(): string | null {
+  try {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 // 로그인 뒤 돌아갈 주소. 다른 사이트로 보내지 않도록 우리 사이트 안의 경로만 허용한다
 export function safeNext(next: string | null, fallback = "/") {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : fallback;

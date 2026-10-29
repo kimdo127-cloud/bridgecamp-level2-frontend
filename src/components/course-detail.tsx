@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ApplySheet } from "@/components/apply-sheet";
-import { AdminBar, BottomBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, BottomBar, CategoryThumb, Chip, FlashToast, HomeLink, Skeleton, StatusScreen, TopBar, primaryButton, useAdminRedirect, type Mode } from "@/components/ui";
 import { canApply, courseGroup, getCourse, openCohorts, recordView } from "@/lib/api";
 import { COMMON_FAQ } from "@/lib/faq";
 import { cohortStatus, cohortStatusLabel, deadlineLabel, formatDate, formatDot, formatPrice, formatRange, todayString, weeksLabel } from "@/lib/format";
@@ -25,6 +25,7 @@ export function CourseDetailPage({ mode }: { mode: Mode }) {
   const [state, setState] = useState<State>({ status: "loading" });
 
   const [reloadKey, setReloadKey] = useState(0);
+  const redirecting = useAdminRedirect(mode === "user" ? `/admin/courses/${id}` : null);
 
   useEffect(() => {
     getCourse(Number(id))
@@ -34,16 +35,16 @@ export function CourseDetailPage({ mode }: { mode: Mode }) {
 
   // 수강 희망자가 상세를 본 기록 (신청 전환 현황용). 같은 탭에서 같은 과정은 한 번만 센다
   useEffect(() => {
-    if (mode !== "user") return;
+    if (mode !== "user" || redirecting) return;
     const key = `bridgecamp:viewed:${id}`;
     try {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, "1");
     } catch {}
     recordView(Number(id));
-  }, [id, mode]);
+  }, [id, mode, redirecting]);
 
-  if (state.status === "loading") return <DetailSkeleton />;
+  if (redirecting || state.status === "loading") return <DetailSkeleton />;
 
   if (state.status === "missing")
     return (

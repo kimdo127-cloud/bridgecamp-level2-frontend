@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ApiError, askChat, sendInquiry } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { ApiError, askChat, getChatReplies, sendInquiry } from "@/lib/api";
+import { getVisitorId, useAuth } from "@/lib/auth";
 import type { ChatReply } from "@/lib/types";
 
 type Message = { id: number; role: "user" | "assistant"; content: string; reply?: ChatReply; question?: string };
@@ -12,19 +12,52 @@ type Message = { id: number; role: "user" | "assistant"; content: string; reply?
 const SUGGESTIONS = ["이번 달에 개강하는 과정 있어요?", "코딩 처음인데 들을 수 있는 과정은?", "온라인으로 들을 수 있는 과정 알려 주세요", "환불 규정이 어떻게 되나요?"];
 
 let seq = 0;
+const SEEN_KEY = "bridgecamp:seen-reply";
 
 // 우측 하단 상담 챗봇. 질문은 백엔드로 보내고, 백엔드가 DB의 과정 정보와 함께 GPT에 물어 답한다 (GPT 키는 백엔드에만 있음)
 export function ChatWidget() {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const [replies, setReplies] = useState<{ id: number; at: string; text: string }[]>([]);
+  const [seenReplyId, setSeenReplyId] = useState(0);
+
+  // 운영팀 답변: 로그인이면 계정, 아니면 이 브라우저의 방문자 ID로 받아 온다. 처음 화면과 챗봇을 열 때 확인한다
+  useEffect(() => {
+    let alive = true;
+    const t = setTimeout(() => {
+      try {
+        setSeenReplyId(Number(localStorage.getItem(SEEN_KEY) ?? 0));
+      } catch {}
+      const visitorId = localStorage.getItem("bridgecamp:visitor");
+      getChatReplies(visitorId)
+        .then((r) => alive && setReplies(r))
+        .catch(() => undefined);
+    }, 0);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [user, open]);
+
+  // 챗봇을 열면 지금까지 온 답변을 읽은 것으로 표시한다
+  useEffect(() => {
+    if (!open || replies.length === 0) return;
+    const last = replies[replies.length - 1].id;
+    try {
+      localStorage.setItem(SEEN_KEY, String(last));
+    } catch {}
+    const t = setTimeout(() => setSeenReplyId(last), 0);
+    return () => clearTimeout(t);
+  }, [open, replies]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, sending]);
+  }, [messages, sending, replies]);
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +77,7 @@ export function ChatWidget() {
     setInput("");
     setSending(true);
     try {
-      const reply = await askChat(question, history);
+      const reply = await askChat(question, history, getVisitorId());
       setMessages((m) => [...m, { id: ++seq, role: "assistant", content: reply.answer, reply, question }]);
     } catch (e) {
       const content = e instanceof ApiError && e.status === 400 ? e.message : "지금은 답변하기 어려워요. 잠시 뒤 다시 물어봐 주세요.";
@@ -66,13 +99,13 @@ export function ChatWidget() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="pointer-events-auto flex h-14 items-center gap-2 rounded-full bg-brand-600 pr-5 pl-4 text-[15px] font-semibold text-white shadow-[0_8px_24px_rgba(74,74,224,0.4)] active:scale-95"
+            className="pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-[0_8px_24px_rgba(74,74,224,0.4)] active:scale-95"
             aria-label="상담 챗봇 열기"
+            title="상담 챗봇"
           >
-            <span className="text-xl" aria-hidden>
-              💬
-            </span>
-            무엇이든 물어보세요
+            <RobotIcon />
+            {/* 아직 보지 않은 운영팀 답변이 있으면 빨간 점 */}
+            {replies.some((r) => r.id > seenReplyId) && <span className="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#e5484d]" aria-label="새 운영팀 답변" />}
           </button>
         </div>
       )}
@@ -98,6 +131,12 @@ export function ChatWidget() {
               <Bubble role="assistant">
                 안녕하세요! 브릿지캠프 상담 챗봇이에요. 개강일, 수강료, 남은 자리, 나에게 맞는 과정을 물어보세요. 과정 정보에 없는 내용은 운영팀에 연결해 드려요.
               </Bubble>
+              {replies.map((r) => (
+                <div key={`reply-${r.id}`}>
+                  <p className="mb-1 px-1 text-[11px] font-semibold text-brand-700">브릿지캠프 운영팀 답변</p>
+                  <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-brand-50 px-4 py-2.5 text-[14px] leading-relaxed whitespace-pre-line text-ink ring-1 ring-brand-200">{r.text}</div>
+                </div>
+              ))}
               {messages.length === 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">
                   {SUGGESTIONS.map((s) => (
@@ -133,7 +172,13 @@ export function ChatWidget() {
               )}
             </div>
 
-            <form onSubmit={onSubmit} className="flex items-end gap-2 border-t border-line bg-white px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+            {/* 저장 기준 안내: 로그인 여부에 따라 대화가 어떻게 남는지 알려 준다 */}
+            <p className="border-t border-line bg-white px-4 pt-2.5 text-[11px] leading-snug text-ink-soft">
+              {user
+                ? "상담 품질 개선을 위해 대화가 저장돼요. 연락처 등 개인정보는 입력하지 마세요."
+                : "로그인하지 않은 대화는 개인정보를 가린 뒤 30일간만 보관돼요. 연락처 등 개인정보는 입력하지 마세요."}
+            </p>
+            <form onSubmit={onSubmit} className="flex items-end gap-2 bg-white px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+12px)]">
               <label htmlFor="chat-input" className="sr-only">
                 질문 입력
               </label>
@@ -221,5 +266,20 @@ function HandoffForm({ question, courseId }: { question: string; courseId?: numb
         {sending ? "보내는 중…" : `${user.name}님 이름으로 문의 보내기`}
       </button>
     </form>
+  );
+}
+
+// 챗봇 버튼 아이콘: 안테나와 두 눈이 있는 로봇 얼굴 (이모지 대신 그려서 기기마다 같은 모양으로 보인다)
+function RobotIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3.5v2.5" />
+      <circle cx="12" cy="3" r="1" fill="currentColor" stroke="none" />
+      <rect x="4.5" y="6" width="15" height="12" rx="4" />
+      <path d="M2.5 11v3M21.5 11v3" />
+      <circle cx="9.5" cy="11.5" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="14.5" cy="11.5" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M9.5 15h5" />
+    </svg>
   );
 }

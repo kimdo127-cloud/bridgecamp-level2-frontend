@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AdminBar, CategoryThumb, FlashToast, Skeleton, SlowServerHint, StatusScreen, UserMenu, primaryButton, type Mode } from "@/components/ui";
+import { AdminBar, CategoryThumb, FlashToast, Skeleton, SlowServerHint, StatusScreen, UserMenu, primaryButton, useAdminRedirect, type Mode } from "@/components/ui";
 import { courseGroup, listCourses, openCohorts, type CourseGroup } from "@/lib/api";
 import { cohortStatusLabel, deadlineLabel, formatDot, formatPrice, weeksLabel } from "@/lib/format";
 import { CATEGORIES, FORMATS, type CourseFilter, type CourseWithCohorts } from "@/lib/types";
@@ -24,6 +24,7 @@ export function CourseList({ mode }: { mode: Mode }) {
   const [reloadKey, setReloadKey] = useState(0);
   const requestNo = useRef(0);
   const filtering = Boolean(filter.q || filter.category || filter.format);
+  const redirecting = useAdminRedirect(admin ? null : "/admin");
 
   // 검색어는 입력을 멈추고 0.3초 뒤에 백엔드로 보낸다
   useEffect(() => {
@@ -47,6 +48,8 @@ export function CourseList({ mode }: { mode: Mode }) {
     setQuery("");
     setFilter({});
   };
+
+  if (redirecting) return null;
 
   return (
     <main className={admin ? "pb-32" : "pb-10"}>

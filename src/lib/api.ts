@@ -1,6 +1,6 @@
 import { cohortStatus, daysBetween, todayString } from "./format";
 import { getToken, logout } from "./auth";
-import type { Application, ChatReply, Cohort, CohortInput, CourseFilter, CourseInput, CourseWithCohorts, InquiryLog, Stats, User } from "./types";
+import type { Application, ChatReply, Cohort, CohortInput, CourseFilter, CourseInput, CourseWithCohorts, InquiryLog, MyInquiryItem, Stats, User } from "./types";
 
 // 백엔드(NestJS) 주소. 로컬은 .env.local, 배포는 Vercel 설정값 NEXT_PUBLIC_API_URL로 정한다.
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4200").replace(/\/$/, "");
@@ -132,8 +132,24 @@ export function getInquiryLog() {
   return request<InquiryLog>("/admin/inquiries");
 }
 
-export function askChat(message: string, history: { role: "user" | "assistant"; content: string }[]) {
-  return request<ChatReply>("/chat", { method: "POST", body: JSON.stringify({ message, history }) });
+// visitorId: 로그인 전 방문자를 묶기 위한 브라우저 방문자 ID. 로그인 상태면 백엔드가 계정으로 구분한다
+export function askChat(message: string, history: { role: "user" | "assistant"; content: string }[], visitorId: string | null) {
+  return request<ChatReply>("/chat", { method: "POST", body: JSON.stringify({ message, history, visitorId }) });
+}
+
+// 운영 매니저가 로그인 수강생에게 답변을 보낸다
+export function replyToThread(key: string, message: string) {
+  return request<{ id: number; message: string }>(`/admin/inquiries/${encodeURIComponent(key)}/replies`, { method: "POST", body: JSON.stringify({ message }) });
+}
+
+// 챗봇 창에 보여 줄 운영팀 답변 (로그인이면 계정, 아니면 이 브라우저의 방문자 ID 기준)
+export function getChatReplies(visitorId: string | null) {
+  return request<{ id: number; at: string; text: string }[]>(`/chat/replies${visitorId ? `?visitorId=${visitorId}` : ""}`);
+}
+
+// 내 문의와 운영팀 답변 (수강생 본인)
+export function myInquiries() {
+  return request<MyInquiryItem[]>("/me/inquiries");
 }
 
 export function sendInquiry(input: { message: string; chatQuestion?: string; courseId?: number }) {

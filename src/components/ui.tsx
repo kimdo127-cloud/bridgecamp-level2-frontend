@@ -120,10 +120,22 @@ export function AdminBar({ backHref, nav }: { backHref?: string; nav?: AdminMenu
   );
 }
 
+// 운영 매니저 계정으로 로그인한 상태에서 수강생 화면에 들어오면 같은 내용의 운영 화면으로 바로 보낸다.
+// 이동하는 동안에는 true를 돌려주어 사용자 화면이 잠깐 보이지 않게 한다
+export function useAdminRedirect(adminHref: string | null) {
+  const router = useRouter();
+  const { ready, user } = useAuth();
+  const redirect = Boolean(adminHref) && ready && user?.role === "admin";
+  useEffect(() => {
+    if (redirect && adminHref) router.replace(adminHref);
+  }, [redirect, adminHref, router]);
+  return redirect;
+}
+
 const ADMIN_MENU = [
   { href: "/admin", label: "과정" },
   { href: "/admin/stats", label: "현황" },
-  { href: "/admin/inquiries", label: "문의·챗봇" },
+  { href: "/admin/inquiries", label: "문의 내역" },
 ] as const;
 
 export type AdminMenuHref = (typeof ADMIN_MENU)[number]["href"];
@@ -138,26 +150,25 @@ export function useCurrentPath(fallback = "/") {
   return path;
 }
 
-// 수강생 화면 오른쪽 위: 로그인 전에는 "로그인", 로그인 뒤에는 "내 신청"(수강생) 또는 "운영 모드"(관리자)
+// 수강생 화면 오른쪽 위: 테두리 없는 글자 버튼. 로그인 전에는 "로그인", 로그인 뒤에는 "내 신청"(관리자는 "운영 화면").
+// 수강 희망자의 주된 행동은 둘러보기와 신청이라 로그인은 눈에 덜 띄게 두고, 신청할 때 로그인 안내를 다시 띄운다
 export function UserMenu() {
   const { ready, user } = useAuth();
   const pathname = useCurrentPath();
-  if (!ready) return <span className="h-9 w-16" />;
+  const textButton = "flex h-10 items-center gap-0.5 rounded-lg px-2 text-[14px] font-semibold text-ink-soft active:bg-brand-50 active:text-ink";
+  if (!ready) return <span className="h-10 w-14" />;
   if (!user)
     return (
-      <Link href={`/login?next=${encodeURIComponent(pathname)}`} className="rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-ink ring-1 ring-line active:bg-brand-50">
+      <Link href={`/login?next=${encodeURIComponent(pathname)}`} className={textButton}>
         로그인
       </Link>
     );
   return (
-    <Link
-      href={user.role === "admin" ? "/admin" : "/me"}
-      className="flex items-center gap-1.5 rounded-full bg-white py-1.5 pr-3.5 pl-1.5 text-[13px] font-semibold text-ink ring-1 ring-line active:bg-brand-50"
-    >
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[11px] font-bold text-white" aria-hidden>
-        {user.name.slice(0, 1)}
-      </span>
-      {user.role === "admin" ? "운영 모드" : "내 신청"}
+    <Link href={user.role === "admin" ? "/admin" : "/me"} className={textButton}>
+      {user.role === "admin" ? "운영 화면" : "내 신청"}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M9 18l6-6-6-6" />
+      </svg>
     </Link>
   );
 }

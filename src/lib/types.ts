@@ -81,15 +81,41 @@ export interface Stats {
   conversion: { courseId: number; title: string; views: number; applications: number; rate: number }[];
 }
 
+// 문의 내역의 한 줄: 사람 한 명의 대화 묶음 (로그인 = 수강생 계정, 비로그인 = 브라우저 방문자)
+export type ThreadItem =
+  | { type: "chat"; id: number; at: string; text: string; answer: string; needsHuman: boolean }
+  | { type: "inquiry"; id: number; at: string; text: string; courseTitle: string | null }
+  | { type: "reply"; id: number; at: string; text: string };
+
+export interface Thread {
+  key: string;
+  kind: "member" | "visitor";
+  label: string;
+  lastAt: string;
+  preview: string;
+  count: number;
+  status: "waiting" | "answered" | null;
+  items: ThreadItem[];
+}
+
 export interface InquiryLog {
-  inquiries: { id: number; userName: string; courseTitle: string | null; message: string; chatQuestion: string; status: string; createdAt: string }[];
-  chats: { id: number; userName: string | null; question: string; answer: string; needsHuman: boolean; createdAt: string }[];
+  retentionDays: number;
+  member: Thread[];
+  visitor: Thread[];
+}
+
+export interface MyInquiryItem {
+  type: "inquiry" | "reply";
+  id: number;
+  at: string;
+  text: string;
 }
 
 export interface ChatReply {
   answer: string;
   courses: { id: number; title: string; category: Category }[];
   needsHuman: boolean;
+  saved: "account" | "guest";
 }
 
 export type CourseInput = Omit<Course, "id" | "createdAt"> & { cohorts: CohortInput[] };

@@ -71,3 +71,16 @@ export function deadlineLabel(date: string) {
   if (diff === 1) return "내일 마감";
   return `마감 D-${diff}`;
 }
+
+// 목록용 시각: 오늘이면 "14:05", 아니면 "10.28"
+export function formatListTime(iso: string) {
+  const d = new Date(iso);
+  const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return d.toDateString() === new Date().toDateString() ? time : `${d.getMonth() + 1}.${d.getDate()}`;
+}
+
+// 대화용 시각: "10.28 14:05"
+export function formatChatTime(iso: string) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}

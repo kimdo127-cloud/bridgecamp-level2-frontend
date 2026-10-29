@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CategoryThumb, Chip, Skeleton, StatusScreen, TopBar, primaryButton } from "@/components/ui";
-import { ApiError, cancelApplication, myApplications } from "@/lib/api";
+import { CategoryThumb, Chip, Skeleton, StatusScreen, TopBar, primaryButton, useAdminRedirect } from "@/components/ui";
+import { ApiError, cancelApplication, myApplications, myInquiries } from "@/lib/api";
 import { logout, useAuth } from "@/lib/auth";
-import { cohortStatusLabel, formatDot, formatPrice, formatRange, todayString } from "@/lib/format";
-import type { Application } from "@/lib/types";
+import { cohortStatusLabel, formatChatTime, formatDot, formatPrice, formatRange, todayString } from "@/lib/format";
+import type { Application, MyInquiryItem } from "@/lib/types";
 
 type State = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; items: Application[] };
 
@@ -15,19 +15,24 @@ type State = { status: "loading" } | { status: "error"; message: string } | { st
 export default function MyApplicationsPage() {
   const router = useRouter();
   const { ready, user } = useAuth();
+  const redirecting = useAdminRedirect("/admin");
   const [state, setState] = useState<State>({ status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
+  const [inquiries, setInquiries] = useState<MyInquiryItem[]>([]);
 
   useEffect(() => {
     if (!ready || user?.role !== "member") return;
     myApplications()
       .then((items) => setState({ status: "ready", items }))
       .catch((e) => setState({ status: "error", message: e instanceof ApiError ? e.message : "내 신청을 불러오지 못했어요." }));
+    myInquiries()
+      .then(setInquiries)
+      .catch(() => setInquiries([]));
   }, [ready, user, reloadKey]);
 
-  if (!ready) return <Loading />;
+  if (!ready || redirecting) return <Loading />;
   if (user?.role !== "member")
     return (
       <main>
@@ -135,6 +140,28 @@ export default function MyApplicationsPage() {
               <ApplicationCard key={a.id} a={a} />
             ))}
           </ul>
+        </section>
+      )}
+      {/* 운영팀 문의와 답변: 챗봇에서 남긴 문의에 운영팀이 답하면 여기에 표시된다 */}
+      {inquiries.length > 0 && (
+        <section className="mt-8 px-5">
+          <h2 className="mb-3 text-lg font-bold">
+            운영팀 답변 <span className="text-brand-600">{inquiries.filter((i) => i.type === "reply").length}</span>
+          </h2>
+          <ol className="space-y-2.5 rounded-2xl bg-white p-4">
+            {inquiries.map((i) => (
+              <li key={`${i.type}-${i.id}`} className={`flex flex-col ${i.type === "reply" ? "items-start" : "items-end"}`}>
+                <span className="mb-1 px-1 text-[11px] text-ink-soft">
+                  {i.type === "reply" ? "브릿지캠프 운영팀" : "내 문의"} · {formatChatTime(i.at)}
+                </span>
+                <p
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed whitespace-pre-line ${i.type === "reply" ? "rounded-bl-md bg-brand-50 text-ink" : "rounded-br-md bg-[#eceef4] text-ink"}`}
+                >
+                  {i.text}
+                </p>
+              </li>
+            ))}
+          </ol>
         </section>
       )}
     </main>

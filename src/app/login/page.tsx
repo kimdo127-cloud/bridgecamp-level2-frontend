@@ -41,6 +41,8 @@ export default function LoginPage() {
       const fallback = user.role === "admin" ? "/admin" : "/";
       const target = safeNext(next, fallback);
       router.replace(user.role === "member" && target.startsWith("/admin") ? "/" : target);
+      // 이 화면의 상태는 이동한 뒤에도 남아 있을 수 있어서(로그아웃 후 다시 올 때), 버튼을 다시 누를 수 있게 풀어 둔다
+      setSaving(false);
     } catch (e) {
       setSaving(false);
       setMessage(e instanceof ApiError ? e.message : "로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");
